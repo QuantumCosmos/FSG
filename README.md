@@ -1,0 +1,2 @@
+# FSG
+Fourier Series Generator
