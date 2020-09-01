@@ -1,20 +1,12 @@
-from sympy.abc import x
-import inspect
 import math
-from sympy import integrate, Symbol, exp, cos, sin
-import scipy.integrate
-from time import sleep, time
 import pygame
-from pygame.locals import *
-
+from sympy import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
+from pygame.locals import *
 
 
 pi = math.pi
-time_lst = []
-pos_list_a = []
-pos_list_b = []
 
 display = (800,500)
 adjustX = display[0]/min(display)
@@ -38,7 +30,7 @@ def circle(radius, posx, posy, n, epoch=0):
     glEnable(GL_LINE_SMOOTH)
     glBegin(GL_LINE_STRIP)
     x = y = 0
-    for i in range(slides+1, -1, -1):    
+    for i in range(1, slides):    
         x = (radius/adjustX * math.cos(n*2*pi*i/slides + epoch) + posx)
         y = (radius/adjustY * math.sin(n*2*pi*i/slides + epoch) + posy)
         glVertex2f(x, y)
@@ -53,7 +45,7 @@ def point(x, y, size=2.0):
     glEnable(GL_BLEND)
     glPointSize(size)
     glBegin(GL_POINTS)
-    glVertex2f(x, y);
+    glVertex2f(x, y)
     glEnd()
 
 
@@ -78,34 +70,41 @@ def curve(l):
 def main():
     pygame.init()
     str_func = input('Enter the function:\n')
-
-    pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
     limit = 50
     arc = 0
-    k = 1
+    k = 2
     l = []
-    r = pi
     i = Symbol('i')
     x = Symbol('x')
     R = Symbol('R')
-    R = r
-    fa = eval(str_func)*cos(x*i)
-    fb = eval(str_func)*sin(x*i)
-    a = integrate(fa, (x, -R, R), conds='none')
-    b = integrate(fb, (x, -R, R), conds='none')
-    print(a, b)
+    while True:
+        try:
+            eval(str_func)
+            break
+        except NameError as e:
+            no_such_name = str(e).split()[1].replace("'", "")
+            str_func = str_func.replace(no_such_name, 'sympy.'+no_such_name)
+
+    a = integrate(eval(str_func)*cos(x*i), (x, -R, R), conds='none')
+    b = integrate(eval(str_func)*sin(x*i), (x, -R, R), conds='none')
+    c = integrate(eval(str_func), (x, -R, R), conds='none')
+    
+    # print(a.simplify(), '\n', b.simplify())
+    R = pi
     print('Integration done')
 
-    ai = lambda i: eval(str(a))
-    bi = lambda i: eval(str(b))
-    rad = lambda i: math.sqrt(ai(i)**2 + bi(i)**2)
+    ai = lambda i, R: eval(str(a))
+    bi = lambda i, R: eval(str(b))
+    rad = lambda i: math.sqrt(ai(i, R)**2 + bi(i, R)**2)
 
-    e = lambda i: math.atan2(float(ai(i)), float(bi(i)))
+    e = lambda i: math.atan2(float(ai(i, R)), float(bi(i, R)))
 
     list_rad = [rad(i) for i in range(1, limit)]
+    scale = (float(c)/(2*R))*10 if c else 10+max(list_rad)/R
+
     list_e = [e(i) for i in range(1, limit)]
     print('values ready')
-
+    pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
 
     while True:
 
@@ -117,7 +116,7 @@ def main():
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
         line((1,0), (-1,0))
         x = center_x_0
-        y = center_y_0
+        y = center_y_0 + (float(c)/(2*R))/scale
         
         
         for i in range(1, limit):
@@ -125,7 +124,7 @@ def main():
             prevy = y
             epoch = list_e[i-1]
 
-            radius = list_rad[i-1]*0.1/r
+            radius = (list_rad[i-1]/R)/scale
 
             x += radius/adjustX * math.cos(-i*k*arc+epoch)
             y += radius/adjustY * math.sin(-i*k*arc+epoch)
