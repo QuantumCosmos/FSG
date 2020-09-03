@@ -65,7 +65,8 @@ def curve(l):
 
 def main():
     pygame.init()
-    str_func = 'sin(x)' # input('Enter the function:\n')
+    inp = input('Enter the function with limits (separated by space):\n').split(' ')
+    str_func = inp.pop(0)
     lim = 50
     arc = 0
     k = 2
@@ -82,8 +83,10 @@ def main():
         except NameError as e:
             no_such_name = str(e).split()[1].replace("'", "")
             str_func = str_func.replace(no_such_name, 'sympy.'+no_such_name)
-    uL = pi
-    lL = -pi
+
+    uL = eval(max(inp))
+    lL = eval(min(inp))
+
     R = uL-lL
     a = integrate((2/R)*eval(str_func)*cos(2*pi*x*n/R),
                   (x, lL, uL), conds='none')
@@ -120,7 +123,6 @@ def main():
     scale = (c/R)*20 if c else 10*2*max([i for i in list_rad if i not in mark])/R
 
     list_rad = [float(list_rad[i]/scale) if i not in mark else list_rad[i] for i in range(len(list_rad))]
-    print(list_rad)
 
     print('Values Ready!')
     
