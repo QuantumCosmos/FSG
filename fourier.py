@@ -1,6 +1,7 @@
 import math
 import pygame
 from sympy import *
+from time import time
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from pygame.locals import *
@@ -8,7 +9,7 @@ from pygame.locals import *
 
 pi = math.pi
 
-display = (800,500)
+display = (800, 500)
 adjustX = display[0]/min(display)
 adjustY = display[1]/min(display)
 
@@ -19,9 +20,6 @@ center_y_0 = 0
 inc = 0.075
 
 
-
-
-
 def circle(radius, posx, posy, n, epoch=0):
     slides = 100
     glLineWidth(0.05)
@@ -30,14 +28,12 @@ def circle(radius, posx, posy, n, epoch=0):
     glEnable(GL_LINE_SMOOTH)
     glBegin(GL_LINE_STRIP)
     x = y = 0
-    for i in range(1, slides):    
+    for i in range(1, slides):
         x = (radius/adjustX * math.cos(n*2*pi*i/slides + epoch) + posx)
         y = (radius/adjustY * math.sin(n*2*pi*i/slides + epoch) + posy)
         glVertex2f(x, y)
     glEnd()
     glColor3f(1.0, 1.0, 1.0)
-
-
 
 
 def point(x, y, size=2.0):
@@ -58,7 +54,6 @@ def line(a, b, width=1):
     glLineWidth(1)
 
 
-
 def curve(l):
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     glEnable(GL_LINE_SMOOTH)
@@ -67,16 +62,19 @@ def curve(l):
         glVertex2f(i*inc*0.05, l[i])
     glEnd()
 
+
 def main():
     pygame.init()
-    str_func = input('Enter the function:\n')
-    limit = 50
+    str_func = 'sin(x)' # input('Enter the function:\n')
+    lim = 50
     arc = 0
     k = 2
     l = []
-    i = Symbol('i')
+    n = Symbol('n')
     x = Symbol('x')
-    R = Symbol('R')
+    uL = Symbol('uL')
+    lL = Symbol('lL')
+
     while True:
         try:
             eval(str_func)
@@ -84,27 +82,49 @@ def main():
         except NameError as e:
             no_such_name = str(e).split()[1].replace("'", "")
             str_func = str_func.replace(no_such_name, 'sympy.'+no_such_name)
+    uL = pi
+    lL = -pi
+    R = uL-lL
+    a = integrate((2/R)*eval(str_func)*cos(2*pi*x*n/R),
+                  (x, lL, uL), conds='none')
+    b = integrate((2/R)*eval(str_func)*sin(2*pi*x*n/R),
+                  (x, lL, uL), conds='none')
+    c = float(integrate((2/R)*eval(str_func), (x, lL, uL), conds='none'))
+    print('Integration Done!')
 
-    a = integrate(eval(str_func)*cos(x*i), (x, -R, R), conds='none')
-    b = integrate(eval(str_func)*sin(x*i), (x, -R, R), conds='none')
-    c = integrate(eval(str_func), (x, -R, R), conds='none')
+    def ai(i): return a.evalf(subs={n:i})
+    def bi(i): return b.evalf(subs={n:i})
+
+    def rad(i):
+        a1 = (ai(i))**2
+        b1 = (bi(i))**2
+        return math.sqrt(a1 + b1)
+
+    def e(i): return math.atan2(float(ai(i)), float(bi(i)))
+
+    list_rad = []
+    list_e = []
+    mark = []
+    max_r_for_derac_delta_cond = 0.5
+    cnt = 0
+    for i in range(1, lim+1):
+        r = rad(i)
+        if r > 1e+5:
+            r = max_r_for_derac_delta_cond
+            mark.append(i-1)
+        elif r < 1e-5:
+            r = max_r_for_derac_delta_cond/10 - cnt*max_r_for_derac_delta_cond/100
+            cnt += 1
+        list_rad.append(r)
+        list_e.append(float(e(i)))
+    scale = (c/R)*20 if c else 10*2*max([i for i in list_rad if i not in mark])/R
+
+    list_rad = [float(list_rad[i]/scale) if i not in mark else list_rad[i] for i in range(len(list_rad))]
+    print(list_rad)
+
+    print('Values Ready!')
     
-    # print(a.simplify(), '\n', b.simplify())
-    R = pi
-    print('Integration done')
-
-    ai = lambda i, R: eval(str(a))
-    bi = lambda i, R: eval(str(b))
-    rad = lambda i: math.sqrt(ai(i, R)**2 + bi(i, R)**2)
-
-    e = lambda i: math.atan2(float(ai(i, R)), float(bi(i, R)))
-
-    list_rad = [rad(i) for i in range(1, limit)]
-    scale = (float(c)/(2*R))*10 if c else 10+max(list_rad)/R
-
-    list_e = [e(i) for i in range(1, limit)]
-    print('values ready')
-    pygame.display.set_mode(display, DOUBLEBUF|OPENGL)
+    pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
 
     while True:
 
@@ -113,40 +133,39 @@ def main():
                 pygame.quit()
                 quit()
 
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
-        line((1,0), (-1,0))
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        line((1, 0), (-1, 0))
         x = center_x_0
-        y = center_y_0 + (float(c)/(2*R))/scale
-        
-        
-        for i in range(1, limit):
+        y = center_y_0 + (c/2)/scale
+
+        for i in range(1, len(list_rad)+1):
             prevx = x
             prevy = y
             epoch = list_e[i-1]
 
-            radius = (list_rad[i-1]/R)/scale
+            radius = (list_rad[i-1])
+
 
             x += radius/adjustX * math.cos(-i*k*arc+epoch)
             y += radius/adjustY * math.sin(-i*k*arc+epoch)
             circle(radius, prevx, prevy, i, epoch)
-            point(prevx,prevy)
+            point(prevx, prevy)
 
             line((prevx, prevy), (x, y))
 
-        l.insert(0,y)
-        if len(l)>300:
+        l.insert(0, y)
+        if len(l) > 300:
             l.pop()
         point(0, l[0], 5)
         line((0, l[0]), (x, y))
         line((0, l[0]), (0, 0), 0.5)
         line((x, 0), (x, y), 0.5)
-        
+
         arc += inc
 
         curve(l)
-        
-        pygame.display.flip()
 
+        pygame.display.flip()
 
 
 main()
