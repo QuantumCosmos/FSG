@@ -65,7 +65,8 @@ def curve(l):
 
 def main():
     pygame.init()
-    inp = input('Enter the function with limits (separated by space):\n').split(' ')
+    inp = input(
+        'Enter the function with limits (separated by space):\n').split(' ')
     str_func = inp.pop(0)
     lim = 50
     arc = 0
@@ -86,6 +87,8 @@ def main():
 
     uL = eval(max(inp))
     lL = eval(min(inp))
+    temp = str_func
+    max_val = float(eval(temp.replace('x', str(uL))))
 
     R = uL-lL
     a = integrate((2/R)*eval(str_func)*cos(2*pi*x*n/R),
@@ -93,10 +96,11 @@ def main():
     b = integrate((2/R)*eval(str_func)*sin(2*pi*x*n/R),
                   (x, lL, uL), conds='none')
     c = float(integrate((2/R)*eval(str_func), (x, lL, uL), conds='none'))
+    print(a, '\n', b)
     print('Integration Done!')
 
-    def ai(i): return a.evalf(subs={n:i})
-    def bi(i): return b.evalf(subs={n:i})
+    def ai(i): return a.evalf(subs={n: i})
+    def bi(i): return b.evalf(subs={n: i})
 
     def rad(i):
         a1 = (ai(i))**2
@@ -115,17 +119,24 @@ def main():
         if r > 1e+5:
             r = max_r_for_derac_delta_cond
             mark.append(i-1)
-        elif r < 1e-5:
-            r = max_r_for_derac_delta_cond/10 - cnt*max_r_for_derac_delta_cond/100
-            cnt += 1
         list_rad.append(r)
         list_e.append(float(e(i)))
-    scale = (c/R)*20 if c else 10*2*max([i for i in list_rad if i not in mark])/R
+    scale = (c/R) if c else 10*2*max([list_rad[i]
+                                      for i in range(len(list_rad)) if i not in mark])/R
+    if max([list_rad[i] for i in range(len(list_rad)) if i not in mark]) < 1e-10:
+        scale = 1
+    # print(scale)
+    # print(min([list_rad[i] for i in range(len(list_rad)) if i not in mark]))
+    scale = max_val*2
+    if scale < 1e-5:
+        scale = 2
+    print(scale)
 
-    list_rad = [float(list_rad[i]/scale) if i not in mark else list_rad[i] for i in range(len(list_rad))]
+    list_rad = [float(list_rad[i]/scale) if i not in mark else list_rad[i]
+                for i in range(len(list_rad))]
 
     print('Values Ready!')
-    
+
     pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
 
     while True:
@@ -146,7 +157,6 @@ def main():
             epoch = list_e[i-1]
 
             radius = (list_rad[i-1])
-
 
             x += radius/adjustX * math.cos(-i*k*arc+epoch)
             y += radius/adjustY * math.sin(-i*k*arc+epoch)
