@@ -121,19 +121,10 @@ def main():
             mark.append(i-1)
         list_rad.append(r)
         list_e.append(float(e(i)))
-    scale = (c/R) if c else 10*2*max([list_rad[i]
-                                      for i in range(len(list_rad)) if i not in mark])/R
-    if max([list_rad[i] for i in range(len(list_rad)) if i not in mark]) < 1e-10:
-        scale = 1
-    # print(scale)
-    # print(min([list_rad[i] for i in range(len(list_rad)) if i not in mark]))
-    scale = max_val*2
-    if scale < 1e-5:
-        scale = 2
-    print(scale)
+    
+    scale = max_val*2 if max_val > 1e-5 else 1/max_r_for_derac_delta_cond
 
-    list_rad = [float(list_rad[i]/scale) if i not in mark else list_rad[i]
-                for i in range(len(list_rad))]
+    list_rad = [float(list_rad[i]/scale) for i in range(len(list_rad))]
 
     print('Values Ready!')
 
