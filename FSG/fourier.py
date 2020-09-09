@@ -1,11 +1,27 @@
 import math
 import pygame
-from sympy import *
+# from sympy import Symbol
+from scipy import *
+import numpy as np
 from time import time
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from pygame.locals import *
+import scipy.integrate
+# import warnings
+# warnings.filterwarnings("error", category=DeprecationWarning)
 
+
+math_tray = {
+    "sinh": "np.sinh",
+    "cosh": "np.cosh",
+    "tanh": "np.tanh",
+    "sin": "np.sin",
+    "cos": "np.cos",
+    "tan": "np.tan",
+    "log": "np.log",
+    "exp": "np.exp",
+}
 
 pi = math.pi
 
@@ -72,18 +88,9 @@ def main():
     arc = 0
     k = 2
     l = []
-    n = Symbol('n')
-    x = Symbol('x')
-    uL = Symbol('uL')
-    lL = Symbol('lL')
-
-    while True:
-        try:
-            eval(str_func)
-            break
-        except NameError as e:
-            no_such_name = str(e).split()[1].replace("'", "")
-            str_func = str_func.replace(no_such_name, 'sympy.'+no_such_name)
+    for i in math_tray:
+        if i in str_func:
+            str_func = str_func.replace(i, math_tray[i]).replace("np.np.", "np.")
 
     uL = eval(max(inp))
     lL = eval(min(inp))
@@ -91,16 +98,10 @@ def main():
     max_val = float(eval(temp.replace('x', str(uL))))
 
     R = uL-lL
-    a = integrate((2/R)*eval(str_func)*cos(2*pi*x*n/R),
-                  (x, lL, uL), conds='none')
-    b = integrate((2/R)*eval(str_func)*sin(2*pi*x*n/R),
-                  (x, lL, uL), conds='none')
-    c = float(integrate((2/R)*eval(str_func), (x, lL, uL), conds='none'))
-    print(a, '\n', b)
-    print('Integration Done!')
+    ai = lambda n: scipy.integrate.quad(lambda x: (2/R)*eval(str_func)*np.cos(2*pi*x*n/R), lL, uL)[0]
+    bi = lambda n: scipy.integrate.quad(lambda x: (2/R)*eval(str_func)*np.sin(2*pi*x*n/R), lL, uL)[0]
+    c = scipy.integrate.quad(lambda x: (2/R)*eval(str_func), lL, uL)[0]
 
-    def ai(i): return a.evalf(subs={n: i})
-    def bi(i): return b.evalf(subs={n: i})
 
     def rad(i):
         a1 = (ai(i))**2
@@ -111,18 +112,15 @@ def main():
 
     list_rad = []
     list_e = []
-    mark = []
-    max_r_for_derac_delta_cond = 0.5
-    cnt = 0
+    max_r_for_inf_cond = 0.5
     for i in range(1, lim+1):
         r = rad(i)
         if r > 1e+5:
-            r = max_r_for_derac_delta_cond
-            mark.append(i-1)
+            r = max_r_for_inf_cond
         list_rad.append(r)
         list_e.append(float(e(i)))
-    
-    scale = max_val*2 if max_val > 1e-5 else 1/max_r_for_derac_delta_cond
+
+    scale = 2*(max(list_rad)+list_rad[0])
 
     list_rad = [float(list_rad[i]/scale) for i in range(len(list_rad))]
 
@@ -148,9 +146,9 @@ def main():
             epoch = list_e[i-1]
 
             radius = (list_rad[i-1])
-
             x += radius/adjustX * math.cos(-i*k*arc+epoch)
             y += radius/adjustY * math.sin(-i*k*arc+epoch)
+
             circle(radius, prevx, prevy, i, epoch)
             point(prevx, prevy)
 
