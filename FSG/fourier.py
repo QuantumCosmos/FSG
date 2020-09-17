@@ -19,8 +19,8 @@ class fourier_wave(drawGL):
         "exp": "np.exp",
     }
 
-    def __init__(self, increment, center, display, speed=2, limit=50):
-        self.inc = increment
+    def __init__(self, center, display, speed=2, limit=50):
+        self.inc = pi/limit
         self.center = center
         self.adjustX = display[0]/min(display)
         self.adjustY = display[1]/min(display)
@@ -105,7 +105,7 @@ class fourier_wave(drawGL):
                 self.line((prevx, prevy), (x, y))
 
             l.insert(0, y)
-            if len(l) > 300:
+            if len(l) > 350:
                 l.pop()
             self.point(0, l[0], 5)
             self.line((0, l[0]), (x, y))
@@ -121,6 +121,5 @@ class fourier_wave(drawGL):
 
 display = (800, 500)
 center = (-0.55, 0)
-increment = 0.075
-m = fourier_wave(increment, center, display)
+m = fourier_wave(center, display)
 m.run(*m.set_radius_epoch(*m.integrate(*m.set_inp(m.get_inp()))))
