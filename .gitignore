@@ -1,4 +1,6 @@
 *
 !.gitignore
-!FSG\
+!FSG
+!LEnDeL
+!*/*.py
 !README.md
