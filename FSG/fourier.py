@@ -19,7 +19,7 @@ class fourier_wave(drawGL):
         "exp": "np.exp",
     }
 
-    def __init__(self, center, display, speed=2, limit=50):
+    def __init__(self, center, display, speed=.5, limit=50):
         self.inc = pi/limit
         self.center = center
         self.adjustX = display[0]/min(display)
@@ -58,24 +58,24 @@ class fourier_wave(drawGL):
 
         def epoch(i): return atan2(float(ai(i)), float(bi(i)))
 
-        list_radius = []
-        list_epoch = []
+        rad_epo = {}
+        scale = 0
         for i in range(1, self.lim+1):
             r = radius(i)
+            if r > 0:
+                scale += r
             if r > 1e+5:
                 r = fourier_wave.max_r_for_inf_cond
-            list_radius.append(r)
-            list_epoch.append(float(epoch(i)))
-
-        scale = 2*(max(list_radius)+list_radius[0])
-        list_radius = [i/scale for i in list_radius]
+            rad_epo[i] = {'rad':r, 'epo':float(epoch(i))}
+        
+        scale = int(scale)+1
         print('Values Ready!')
 
-        return list_radius, list_epoch, c/scale
+        return c/scale, rad_epo, scale
 
-    def run(self, list_radius, list_epoch, c):
+    def run(self, c, rad_epo, scale):
         arc = 0
-        l = []        
+        l = []
         pygame.init()
         pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
 
@@ -91,12 +91,11 @@ class fourier_wave(drawGL):
             x = self.center[0]
             y = self.center[1] + c/2
 
-            for i in range(1, len(list_radius)+1):
+            for i in range(1, self.lim+1):
                 prevx = x
                 prevy = y
-                epoch = list_epoch[i-1]
-
-                radius = list_radius[i-1]
+                epoch = rad_epo[i]['epo']
+                radius = rad_epo[i]['rad']/scale
                 x += radius/self.adjustX * cos(-i*self.speed*arc+epoch)
                 y += radius/self.adjustY * sin(-i*self.speed*arc+epoch)
 
