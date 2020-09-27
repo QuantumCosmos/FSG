@@ -19,8 +19,8 @@ class fourier_wave(drawGL):
         "exp": "np.exp",
     }
 
-    def __init__(self, center, display, speed=.5, limit=50):
-        self.inc = pi/limit
+    def __init__(self, center, display, speed=1, limit=50):
+        self.inc = 2*pi/limit
         self.center = center
         self.adjustX = display[0]/min(display)
         self.adjustY = display[1]/min(display)
@@ -76,6 +76,7 @@ class fourier_wave(drawGL):
     def run(self, c, rad_epo, scale):
         arc = 0
         l = []
+        all_val = []
         pygame.init()
         pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
 
@@ -104,6 +105,9 @@ class fourier_wave(drawGL):
                 self.line((prevx, prevy), (x, y))
 
             l.insert(0, y)
+            if arc < 2*pi/self.speed:
+                all_val.append((prevx, prevy))
+                
             if len(l) > 350:
                 l.pop()
             self.point(0, l[0], 5)
@@ -114,6 +118,7 @@ class fourier_wave(drawGL):
             arc += self.inc
 
             self.curve(l)
+            self.trace(all_val)
 
             pygame.display.flip()
 
