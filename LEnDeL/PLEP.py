@@ -1,28 +1,42 @@
 import os
+import subprocess
 from sympy import *
-start = ['\\documentclass{article}\n',
-         '\\usepackage[utf8]{inputenc}\n',
-         '\\usepackage{amsmath}\n',
-         '\\usepackage{mathtools}\n',
-         '\\begin{document}\n']
-end = ['\n\end{document}']
-texdoc = []  # a list of string representing the latex document in python
-head = '\\begin{equation*}\n'
-tail = '\n\\end{equation*}\n'
-equn = '\\alpha\\cdot\\gamma+\\beta = x^{\\frac{1!}{n}+\\frac{2!}{n^2}+\\frac{3!}{n^3}+\\ldots}'
-x = symbols('x')
-# inp = x**(12+x+3**(4*x+x))+x*3+46
-# inp = x**12+1# inp = sin(x)**(25*x+4**x*(90+x))+exp(2**(log(x**(2*x+6))+10*x**x))
-inp = 2*x +6
-inp = input('Enter math:\n')
-inp = simplify(inp)
-inp = latex(inp)
-print(inp)
-texdoc.append(''.join(start))
-texdoc.append(head+equn+tail+head+inp+tail)
-texdoc.append(''.join(end))
-with open('new.tex', 'w') as fout:
-    for i in range(len(texdoc)):
-        fout.write(texdoc[i])
+def make_A_tex(name='new', rmlog=True, openPDF=False):
+    head = ['\\documentclass{article}\n',
+            '\\usepackage[utf8]{inputenc}\n',
+            '\\usepackage{amsmath}\n',
+            '\\usepackage{mathtools}\n',
+            '\\begin{document}\n',
+            '\\begin{equation*}\n']
+    tail = ['\n\\end{equation*}\n', 
+            '\\end{document}']
+    x = symbols('x')
+    inp = latex(simplify(input('Enter math:\n')))
+    print(inp)
+    texdoc = ''.join(head) + inp + ''.join(tail)
+    with open(name+'.tex', 'w') as fout:
+        fout.write(texdoc)
+    print('.tex file successfully written')
+    try:
+        subprocess.run("pdflatex " + name + ".tex", stdout=subprocess.DEVNULL)
+        print('.tex file successfully compilied')
+    except FileNotFoundError:
+        print('no latex compiler')
+    if rmlog:
+        delete(name)
+    if openPDF:
+        os.popen(name+'.pdf')
+    return inp
 
-os.system("windll\\pdflatex new.tex")
+
+def delete(name):
+    os.remove(name+'.aux')
+    os.remove(name+'.log')
+    try:
+        os.remove(name+'.synctex.gz')
+    except FileNotFoundError:
+        pass
+    
+
+
+make_A_tex()

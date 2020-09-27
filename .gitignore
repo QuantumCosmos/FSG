@@ -2,5 +2,9 @@
 !.gitignore
 !FSG
 !LEnDeL
+!*/*.exe
 !*/*.py
 !README.md
+*/fldr.py
+*/setup.py
+*/hooker.py
