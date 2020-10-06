@@ -2,8 +2,10 @@
 !.gitignore
 !FSG
 !LEnDeL
+!kivyGUI
 !*/*.exe
 !*/*.py
+!*/*.kv
 !README.md
 */fldr.py
 */setup.py

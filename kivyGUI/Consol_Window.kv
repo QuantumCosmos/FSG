@@ -1,0 +1,17 @@
+#:kivy 1.11.1
+User:
+    BoxLayout:
+        orientation: "vertical"
+
+        TextInput:
+            id: test1
+            focus: True
+            text: '>>> '
+            width: 100
+            multiline: True
+            on_text: root.refresh_textinput()
+
+        Label:
+            id: test3
+            text: 'Ok'
+            focus: True
