@@ -122,8 +122,8 @@ class fourier_wave(drawGL):
 
             pygame.display.flip()
 
-
-display = (800, 500)
-center = (-0.55, 0)
-m = fourier_wave(center, display)
-m.run(*m.set_radius_epoch(*m.integrate(*m.set_inp(m.get_inp()))))
+if __name__ == '__main__':
+    display = (800, 500)
+    center = (-0.55, 0)
+    m = fourier_wave(center, display)
+    m.run(*m.set_radius_epoch(*m.integrate(*m.set_inp(m.get_inp()))))

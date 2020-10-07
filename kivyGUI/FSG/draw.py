@@ -54,8 +54,7 @@ class drawGL:
     def trace(self, l):
         glLineWidth(0.1)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glEnable(GL_LINE_SMOOTH)
-        glBegin(GL_LINE_STRIP)
+        glBegin(GL_LINE_LOOP)
         for i in range(len(l)):
             glVertex2f(l[i][0], l[i][1])
         glEnd()
