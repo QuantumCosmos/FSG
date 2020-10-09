@@ -1,6 +1,9 @@
 import pygame
 import numpy as np
-from draw import drawGL
+try:
+    from .draw import drawGL
+except ImportError:
+    from draw import drawGL
 from scipy.integrate import quad
 from math import pi, atan2, sqrt, sin, cos
 from pygame.locals import DOUBLEBUF, OPENGL
@@ -24,41 +27,38 @@ class fourier_wave(drawGL):
         self.center = center
         self.adjustX = display[0]/min(display)
         self.adjustY = display[1]/min(display)
+        self.display = display
 
         self.speed = speed
         self.lim = limit
         super(fourier_wave, self).__init__(self.adjustX, self.adjustY, self.inc)
 
-    def get_inp(self):
-        return input('Enter the function with limits (separated by space):\n').split(' ')
 
     def set_inp(self, inp):
-        str_func = inp.pop(0)
+        self.str_func = inp.pop(0)
         for i in fourier_wave.math_tray:
-            if i in str_func:
-                str_func = str_func.replace(i, fourier_wave.math_tray[i]).replace("np.np.", "np.")
-        lL = eval(inp[0])
-        uL = eval(inp[1])
-        if lL > uL:
-            uL, lL = lL, uL
+            if i in self.str_func:
+                self.str_func = self.str_func.replace(i, fourier_wave.math_tray[i]).replace("np.np.", "np.")
+        self.lL = eval(inp[0])
+        self.uL = eval(inp[1])
+        if self.lL > self.uL:
+            self.uL, self.lL = self.lL, self.uL
 
-        return str_func, lL, uL
 
-    def integrate(self, str_func, lL, uL):
-        R = uL - lL
-        ai = lambda n: quad(lambda x: (2/R)*eval(str_func)*np.cos(2*pi*x*n/R), lL, uL)[0]
-        bi = lambda n: quad(lambda x: (2/R)*eval(str_func)*np.sin(2*pi*x*n/R), lL, uL)[0]
-        c = quad(lambda x: (2/R)*eval(str_func), lL, uL)[0]
+    def integrate(self):
+        R = self.uL - self.lL
+        self.ai = lambda n: quad(lambda x: (2/R)*eval(self.str_func)*np.cos(2*pi*x*n/R), self.lL, self.uL)[0]
+        self.bi = lambda n: quad(lambda x: (2/R)*eval(self.str_func)*np.sin(2*pi*x*n/R), self.lL, self.uL)[0]
+        self.c = quad(lambda x: (2/R)*eval(self.str_func), self.lL, self.uL)[0]
         print('Integration Done!')
 
-        return ai, bi, c
 
-    def set_radius_epoch(self, ai, bi, c):
-        def radius(i): return sqrt((ai(i))**2 + (bi(i))**2)
+    def set_radius_epoch(self):
+        def radius(i): return sqrt((self.ai(i))**2 + (self.bi(i))**2)
 
-        def epoch(i): return atan2(float(ai(i)), float(bi(i)))
+        def epoch(i): return atan2(float(self.ai(i)), float(self.bi(i)))
 
-        rad_epo = {}
+        self.rad_epo = {}
         scale = 0
         for i in range(1, self.lim+1):
             r = radius(i)
@@ -66,19 +66,18 @@ class fourier_wave(drawGL):
                 scale += r
             if r > 1e+5:
                 r = fourier_wave.max_r_for_inf_cond
-            rad_epo[i] = {'rad':r, 'epo':float(epoch(i))}
+            self.rad_epo[i] = {'rad': r, 'epo': float(epoch(i))}
         
-        scale = int(scale)+1
+        self.scale = int(scale)+1
         print('Values Ready!')
 
-        return c/scale, rad_epo, scale
 
-    def run(self, c, rad_epo, scale):
+    def run(self):
         arc = 0
         l = []
         all_val = []
         pygame.init()
-        pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
+        pygame.display.set_mode(self.display, DOUBLEBUF | OPENGL)
 
         while True:
 
@@ -90,13 +89,13 @@ class fourier_wave(drawGL):
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             self.line((1, 0), (-1, 0))
             x = self.center[0]
-            y = self.center[1] + c/2
+            y = self.center[1] + self.c*0.5/self.scale
 
             for i in range(1, self.lim+1):
                 prevx = x
                 prevy = y
-                epoch = rad_epo[i]['epo']
-                radius = rad_epo[i]['rad']/scale
+                epoch = self.rad_epo[i]['epo']
+                radius = self.rad_epo[i]['rad']/self.scale
                 x += radius/self.adjustX * cos(-i*self.speed*arc+epoch)
                 y += radius/self.adjustY * sin(-i*self.speed*arc+epoch)
 
@@ -122,8 +121,13 @@ class fourier_wave(drawGL):
 
             pygame.display.flip()
 
+
 if __name__ == '__main__':
     display = (800, 500)
     center = (-0.55, 0)
     m = fourier_wave(center, display)
-    m.run(*m.set_radius_epoch(*m.integrate(*m.set_inp(m.get_inp()))))
+    m.set_inp(input('Enter the function with limits (separated by space):\n').split(' '))
+    m.integrate()
+    m.set_radius_epoch()
+    m.run()
+
