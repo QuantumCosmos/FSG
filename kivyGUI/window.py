@@ -1,17 +1,24 @@
 from kivy.uix.screenmanager import Screen
 from kivy.app import App
 from kivy.core.window import Window
+from inspect import signature
+from api_fourier import *
+import threading
 
 class User(Screen):
-
+    stage_command = ''
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
         Window.bind(on_key_down=self._on_keyboard_down)
         self.command_dict =  {
-            'one': self.command_one,
-            'two': self.command_two,
-            'three': self.command_three,
-            'exit': self.command_exit,
+            'one': self.one,
+            'two': self.two,
+            'three': self.three,
+            'exit': self.exit,
+            'fourier': fourier,
+            'trace': trace,
+            'circle': circle,
+            'q': q
         }
 
     def _on_keyboard_down(self, instance, keyboard, keycode, text, modifiers):
@@ -23,31 +30,47 @@ class User(Screen):
             self.ids.test1.text = self.ids.test1.text[:-1]
 
     def set_prompt(self):
-        self.ids.test1.text += '\n>>> '
-        self.ids.test3.text = self.ids.test1.text.split('\n')[-2].replace('>>>', '')
+        self.ids.test3.text = self.ids.test1.text.split('\n')[-1].replace('>', '')
+
         self.call_command()
+        self.ids.test1.text += '\n>>{}>'.format(User.stage_command)
 
     
     def call_command(self):
-        t = self.ids.test3.text.replace(' ', '')
+        t = self.ids.test3.text
         try:
-            self.command_dict[t](t)
+            if User.stage_command:
+                command = self.command_dict[User.stage_command]
+                threading.Thread(target=command, args=(User.stage_command, t.replace(User.stage_command, ''), )).start()
+                User.stage_command = ''
+            else:
+                command = self.command_dict[t]
+                if len(signature(command).parameters)-1:
+                    User.stage_command = command.__name__
+                else:
+                    threading.Thread(target=command, args=(t, )).start()
+
         except KeyError:
             print('Sorry, there is no command key: ' + t)
 
-    
-    def command_one(self, t):
+    def non(self, n):
+        while n<10000:
+            print(n)
+            n += 1
+    def one(self, t, n):
+        print(n)
+        self.non(int(n))
         print("Command one has Been Processed")
 
 
-    def command_two(self, t):
+    def two(self, t):
         print("Command two has Been Processed")
 
 
-    def command_three(self, t):
+    def three(self, t):
         print("Command three has Been Processed")
     
-    def command_exit(self, t):
+    def exit(self, t):
         App.get_running_app().stop()
 
 

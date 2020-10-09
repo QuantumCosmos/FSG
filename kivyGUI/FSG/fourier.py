@@ -10,6 +10,10 @@ from pygame.locals import DOUBLEBUF, OPENGL
 from OpenGL.GL import glClear, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT
 
 class fourier_wave(drawGL):
+    draw_trace = False
+    draw_circle = True
+    window = True
+
     max_r_for_inf_cond = 0.5
     math_tray = {
         "sinh": "np.sinh",
@@ -82,7 +86,7 @@ class fourier_wave(drawGL):
         while True:
 
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+                if event.type == pygame.QUIT and not fourier_wave.window:
                     pygame.quit()
                     quit()
 
@@ -99,7 +103,8 @@ class fourier_wave(drawGL):
                 x += radius/self.adjustX * cos(-i*self.speed*arc+epoch)
                 y += radius/self.adjustY * sin(-i*self.speed*arc+epoch)
 
-                self.circle(radius, prevx, prevy, i, epoch)
+                if fourier_wave.draw_circle:
+                    self.circle(radius, prevx, prevy, i, epoch)
                 self.point(prevx, prevy)
                 self.line((prevx, prevy), (x, y))
 
@@ -117,7 +122,8 @@ class fourier_wave(drawGL):
             arc += self.inc
 
             self.curve(l)
-            self.trace(all_val)
+            if fourier_wave.draw_trace:
+                self.trace(all_val)
 
             pygame.display.flip()
 
