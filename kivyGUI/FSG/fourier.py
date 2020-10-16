@@ -12,7 +12,7 @@ from OpenGL.GL import glClear, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT
 class fourier_wave(drawGL):
     draw_trace = False
     draw_circle = True
-    window = True
+    runLoop = True
 
     max_r_for_inf_cond = 0.5
     math_tray = {
@@ -77,6 +77,7 @@ class fourier_wave(drawGL):
 
 
     def run(self):
+        self.runLoop = True
         arc = 0
         l = []
         all_val = []
@@ -86,9 +87,11 @@ class fourier_wave(drawGL):
         while True:
 
             for event in pygame.event.get():
-                if event.type == pygame.QUIT and not fourier_wave.window:
-                    pygame.quit()
-                    quit()
+                if event.type == pygame.QUIT:
+                    fourier_wave.runLoop = False
+                    break
+            if not fourier_wave.runLoop:
+                break
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             self.line((1, 0), (-1, 0))

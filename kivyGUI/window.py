@@ -2,24 +2,24 @@ from kivy.uix.screenmanager import Screen
 from kivy.app import App
 from kivy.core.window import Window
 from inspect import signature
-from api_fourier import *
+from api_fourier import api
 import threading
 
-class User(Screen):
+class User(Screen, api):
     stage_command = ''
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
         Window.bind(on_key_down=self._on_keyboard_down)
-        self.command_dict =  {
-            'one': self.one,
-            'two': self.two,
-            'three': self.three,
-            'exit': self.exit,
-            'fourier': fourier,
-            'trace': trace,
-            'circle': circle,
-            'q': q
-        }
+        # self.command_dict = {
+        #     'one': self.one,
+        #     'two': self.two,
+        #     'three': self.three,
+        #     'exit': self.exit,
+        #     'fourier': fourier,
+        #     'trace': trace,
+        #     'circle': circle,
+        #     'q': q
+        # }
 
     def _on_keyboard_down(self, instance, keyboard, keycode, text, modifiers):
         if self.ids.test3.focus and keycode == 40:
@@ -30,27 +30,31 @@ class User(Screen):
             self.ids.test1.text = self.ids.test1.text[:-1]
 
     def set_prompt(self):
-        self.ids.test3.text = self.ids.test1.text.split('\n')[-1].replace('>', '')
+        self.ids.test3.text = self.ids.test1.text.split(
+            '\n')[-1].replace('>', '').replace(User.stage_command, '')
 
         self.call_command()
-        self.ids.test1.text += '\n>>{}>'.format(User.stage_command)
+        self.ids.test1.text += '\n>>{}>'.format(
+            User.stage_command)
 
-    
     def call_command(self):
         t = self.ids.test3.text
-        try:
-            if User.stage_command:
-                command = self.command_dict[User.stage_command]
-                threading.Thread(target=command, args=(User.stage_command, t.replace(User.stage_command, ''), )).start()
-                User.stage_command = ''
-            else:
-                command = self.command_dict[t]
-                if len(signature(command).parameters)-1:
-                    User.stage_command = command.__name__
-                else:
-                    threading.Thread(target=command, args=(t, )).start()
 
-        except KeyError:
+        if not User.stage_command == '':
+            command = getattr(self, User.stage_command)
+            threading.Thread(target=command, args=(
+                User.stage_command, t, )).start()
+            User.stage_command = ''
+
+        elif t in dir(User):
+            command = getattr(self, t)
+
+            if len(signature(command).parameters)-1:
+                User.stage_command = t
+            else:
+                threading.Thread(target=command, args=(t, )).start()
+
+        else:
             print('Sorry, there is no command key: ' + t)
 
     def non(self, n):
@@ -69,7 +73,7 @@ class User(Screen):
 
     def three(self, t):
         print("Command three has Been Processed")
-    
+
     def exit(self, t):
         App.get_running_app().stop()
 
